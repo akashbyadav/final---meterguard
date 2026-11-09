@@ -1,0 +1,163 @@
+{
+    "Comment": "Create a durable budget case, notify, wait for acknowledgement, and escalate if still open. Replace REGION, ACCOUNT_ID, and TOPIC_ARN before saving.",
+    "StartAt": "OpenCase",
+    "TimeoutSeconds": 1800,
+    "States": {
+        "OpenCase": {
+            "Type": "Task",
+            "Comment": "Conditional DynamoDB creation makes repeated workflow starts safe for the logical case.",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "arn:aws:lambda:REGION:ACCOUNT_ID:function:mg-cases",
+                "Payload": {
+                    "action": "open",
+                    "case.$": "$"
+                }
+            },
+            "ResultSelector": {
+                "notify.$": "$.Payload.notify"
+            },
+            "ResultPath": "$.opening",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 3
+                }
+            ],
+            "Next": "NeedsNotification"
+        },
+        "NeedsNotification": {
+            "Type": "Choice",
+            "Comment": "An already acknowledged or escalated case needs no second workflow notification.",
+            "Choices": [
+                {
+                    "Variable": "$.opening.notify",
+                    "BooleanEquals": true,
+                    "Next": "Notify"
+                }
+            ],
+            "Default": "Complete"
+        },
+        "Notify": {
+            "Type": "Task",
+            "Comment": "SNS is at-least-once; an ambiguous publish or a task retry may deliver another notification.",
+            "Resource": "arn:aws:states:::sns:publish",
+            "Parameters": {
+                "TopicArn": "TOPIC_ARN",
+                "Subject": "MeterGuard budget threshold reached",
+                "Message.$": "States.Format('Case {}: customer {} has estimated usage charges of {} {} against a budget of {} for {}. Acknowledge this case through the operator API.', $.case_id, $.tenant_id, $.estimated_total, $.currency, $.budget_amount, $.billing_period)"
+            },
+            "ResultPath": null,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 3
+                }
+            ],
+            "Next": "WaitForAcknowledgement"
+        },
+        "WaitForAcknowledgement": {
+            "Type": "Wait",
+            "Comment": "Change this wait to the operational acknowledgement interval before use.",
+            "Seconds": 120,
+            "Next": "ReadStatus"
+        },
+        "ReadStatus": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "arn:aws:lambda:REGION:ACCOUNT_ID:function:mg-cases",
+                "Payload": {
+                    "action": "status",
+                    "case.$": "$"
+                }
+            },
+            "ResultSelector": {
+                "status.$": "$.Payload.status"
+            },
+            "ResultPath": "$.current",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 3
+                }
+            ],
+            "Next": "Acknowledged",
+            "Comment": "Read the current case consistently after the wait and save it under current."
+        },
+        "Acknowledged": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.current.status",
+                    "StringEquals": "OPEN",
+                    "Next": "EscalateNotification"
+                }
+            ],
+            "Default": "Complete",
+            "Comment": "Only an OPEN case needs escalation; other states finish the workflow."
+        },
+        "EscalateNotification": {
+            "Type": "Task",
+            "Comment": "Acknowledgement can race this notification; the final conditional update preserves it.",
+            "Resource": "arn:aws:states:::sns:publish",
+            "Parameters": {
+                "TopicArn": "TOPIC_ARN",
+                "Subject": "MeterGuard budget case requires attention",
+                "Message.$": "States.Format('Case {} for customer {} has not been acknowledged. Review usage for {}.', $.case_id, $.tenant_id, $.billing_period)"
+            },
+            "ResultPath": null,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 3
+                }
+            ],
+            "Next": "RecordEscalation"
+        },
+        "RecordEscalation": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "arn:aws:lambda:REGION:ACCOUNT_ID:function:mg-cases",
+                "Payload": {
+                    "action": "escalate",
+                    "case.$": "$"
+                }
+            },
+            "ResultPath": null,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 2,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 3
+                }
+            ],
+            "Next": "Complete",
+            "Comment": "Record escalation only if the case is still OPEN, preserving concurrent acknowledgement."
+        },
+        "Complete": {
+            "Type": "Succeed",
+            "Comment": "Finish after the case is acknowledged, already terminal, or escalated."
+        }
+    }
+}

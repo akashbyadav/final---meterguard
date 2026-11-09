@@ -1,0 +1,629 @@
+{
+    "_instructions": "This is a named collection, not one IAM policy. Replace REGION, ACCOUNT_ID, BUCKET_NAME, API_ID and WORKGROUP_ID. For each role, paste trust_policy and permissions_policy separately into their console editors. Sid fields explain permission intent. Statement APIs use regional wildcard resources because statement IDs are not IAM resource ARNs; SQL grants and workgroup credentials limit database access.",
+    "roles": {
+        "mg-producer-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "CreateFunctionLogGroup",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogGroup"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:*"
+                    },
+                    {
+                        "Sid": "WriteFunctionLogs",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/lambda/mg-producer:*"
+                    },
+                    {
+                        "Sid": "PublishStableUsageEvents",
+                        "Effect": "Allow",
+                        "Action": [
+                            "kinesis:PutRecords"
+                        ],
+                        "Resource": "arn:aws:kinesis:REGION:ACCOUNT_ID:stream/mg-usage-stream"
+                    },
+                    {
+                        "Sid": "VerifySeededContractsAndRateBeforePublishing",
+                        "Effect": "Allow",
+                        "Action": [
+                            "dynamodb:GetItem"
+                        ],
+                        "Resource": [
+                            "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/mg-contracts",
+                            "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/mg-rates"
+                        ]
+                    }
+                ]
+            }
+        },
+        "mg-context-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "CreateFunctionLogGroup",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogGroup"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:*"
+                    },
+                    {
+                        "Sid": "WriteFunctionLogs",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/lambda/mg-context:*"
+                    },
+                    {
+                        "Sid": "ReadVersionedContractsAndRates",
+                        "Effect": "Allow",
+                        "Action": [
+                            "dynamodb:BatchGetItem"
+                        ],
+                        "Resource": [
+                            "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/mg-contracts",
+                            "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/mg-rates"
+                        ]
+                    }
+                ]
+            }
+        },
+        "mg-cases-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "CreateFunctionLogGroup",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogGroup"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:*"
+                    },
+                    {
+                        "Sid": "WriteFunctionLogs",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/lambda/mg-cases:*"
+                    },
+                    {
+                        "Sid": "ManageDurableCases",
+                        "Effect": "Allow",
+                        "Action": [
+                            "dynamodb:GetItem",
+                            "dynamodb:PutItem",
+                            "dynamodb:UpdateItem"
+                        ],
+                        "Resource": "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/mg-cases"
+                    }
+                ]
+            }
+        },
+        "mg-starter-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "CreateFunctionLogGroup",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogGroup"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:*"
+                    },
+                    {
+                        "Sid": "WriteFunctionLogs",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/lambda/mg-starter:*"
+                    },
+                    {
+                        "Sid": "ConsumeIncidentQueue",
+                        "Effect": "Allow",
+                        "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": "arn:aws:sqs:REGION:ACCOUNT_ID:mg-alert-queue"
+                    },
+                    {
+                        "Sid": "StartBudgetWorkflow",
+                        "Effect": "Allow",
+                        "Action": [
+                            "states:StartExecution"
+                        ],
+                        "Resource": "arn:aws:states:REGION:ACCOUNT_ID:stateMachine:mg-budget-workflow"
+                    },
+                    {
+                        "Sid": "InspectExistingBudgetExecution",
+                        "Effect": "Allow",
+                        "Action": [
+                            "states:DescribeExecution"
+                        ],
+                        "Resource": "arn:aws:states:REGION:ACCOUNT_ID:execution:mg-budget-workflow:*"
+                    }
+                ]
+            }
+        },
+        "mg-dispatcher-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "CreateFunctionLogGroup",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogGroup"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:*"
+                    },
+                    {
+                        "Sid": "WriteFunctionLogs",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/lambda/mg-dispatcher:*"
+                    },
+                    {
+                        "Sid": "RunAndObserveOwnSqlStatements",
+                        "Effect": "Allow",
+                        "Action": [
+                            "redshift-data:ExecuteStatement",
+                            "redshift-data:DescribeStatement",
+                            "redshift-data:CancelStatement",
+                            "redshift-data:GetStatementResult"
+                        ],
+                        "Resource": "*",
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:RequestedRegion": "REGION"
+                            }
+                        }
+                    },
+                    {
+                        "Sid": "AuthenticateOnlyToMeterGuardWorkgroup",
+                        "Effect": "Allow",
+                        "Action": [
+                            "redshift-serverless:GetCredentials"
+                        ],
+                        "Resource": "arn:aws:redshift-serverless:REGION:ACCOUNT_ID:workgroup/WORKGROUP_ID"
+                    },
+                    {
+                        "Sid": "PublishCommittedAlerts",
+                        "Effect": "Allow",
+                        "Action": [
+                            "sqs:SendMessage"
+                        ],
+                        "Resource": "arn:aws:sqs:REGION:ACCOUNT_ID:mg-alert-queue"
+                    }
+                ]
+            }
+        },
+        "mg-glue-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "glue.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "RunAndObserveOwnSqlStatements",
+                        "Effect": "Allow",
+                        "Action": [
+                            "redshift-data:ExecuteStatement",
+                            "redshift-data:DescribeStatement",
+                            "redshift-data:CancelStatement"
+                        ],
+                        "Resource": "*",
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:RequestedRegion": "REGION"
+                            }
+                        }
+                    },
+                    {
+                        "Sid": "AuthenticateOnlyToMeterGuardWorkgroup",
+                        "Effect": "Allow",
+                        "Action": [
+                            "redshift-serverless:GetCredentials"
+                        ],
+                        "Resource": "arn:aws:redshift-serverless:REGION:ACCOUNT_ID:workgroup/WORKGROUP_ID"
+                    },
+                    {
+                        "Sid": "ReadRetainedUsage",
+                        "Effect": "Allow",
+                        "Action": [
+                            "kinesis:DescribeStream",
+                            "kinesis:DescribeStreamSummary",
+                            "kinesis:ListShards",
+                            "kinesis:GetShardIterator",
+                            "kinesis:GetRecords"
+                        ],
+                        "Resource": "arn:aws:kinesis:REGION:ACCOUNT_ID:stream/mg-usage-stream"
+                    },
+                    {
+                        "Sid": "InvokeOnlyBillingContext",
+                        "Effect": "Allow",
+                        "Action": [
+                            "execute-api:Invoke"
+                        ],
+                        "Resource": "arn:aws:execute-api:REGION:ACCOUNT_ID:API_ID/prod/POST/billing-context/batch"
+                    },
+                    {
+                        "Sid": "LocateProjectBucket",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetBucketLocation"
+                        ],
+                        "Resource": "arn:aws:s3:::BUCKET_NAME"
+                    },
+                    {
+                        "Sid": "ListProjectBucketAndMultipartUploads",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ListBucket",
+                            "s3:ListBucketMultipartUploads"
+                        ],
+                        "Resource": "arn:aws:s3:::BUCKET_NAME"
+                    },
+                    {
+                        "Sid": "ReadProjectData",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::BUCKET_NAME/scripts/*",
+                            "arn:aws:s3:::BUCKET_NAME/raw/*",
+                            "arn:aws:s3:::BUCKET_NAME/staged/*",
+                            "arn:aws:s3:::BUCKET_NAME/quarantine/*",
+                            "arn:aws:s3:::BUCKET_NAME/checkpoints/*",
+                            "arn:aws:s3:::BUCKET_NAME/spark-logs/*"
+                        ]
+                    },
+                    {
+                        "Sid": "WriteProcessingArtifacts",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:PutObject",
+                            "s3:DeleteObject",
+                            "s3:AbortMultipartUpload",
+                            "s3:ListMultipartUploadParts"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::BUCKET_NAME/staged/*",
+                            "arn:aws:s3:::BUCKET_NAME/quarantine/*",
+                            "arn:aws:s3:::BUCKET_NAME/checkpoints/*",
+                            "arn:aws:s3:::BUCKET_NAME/spark-logs/*"
+                        ]
+                    },
+                    {
+                        "Sid": "WriteGlueLogs",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogGroup",
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws-glue/*"
+                    },
+                    {
+                        "Sid": "PublishGlueMetrics",
+                        "Effect": "Allow",
+                        "Action": [
+                            "cloudwatch:PutMetricData"
+                        ],
+                        "Resource": "*",
+                        "Condition": {
+                            "StringEquals": {
+                                "cloudwatch:namespace": "Glue"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "mg-redshift-copy-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [
+                                "redshift.amazonaws.com",
+                                "redshift-serverless.amazonaws.com"
+                            ]
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "LocateStagedBucket",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetBucketLocation"
+                        ],
+                        "Resource": "arn:aws:s3:::BUCKET_NAME"
+                    },
+                    {
+                        "Sid": "InspectProjectBucketForCopy",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ListBucket"
+                        ],
+                        "Resource": "arn:aws:s3:::BUCKET_NAME"
+                    },
+                    {
+                        "Sid": "ReadCompletedBatches",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject"
+                        ],
+                        "Resource": "arn:aws:s3:::BUCKET_NAME/staged/*"
+                    }
+                ]
+            }
+        },
+        "mg-firehose-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "firehose.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "ReadIndependentRawArchiveSource",
+                        "Effect": "Allow",
+                        "Action": [
+                            "kinesis:DescribeStream",
+                            "kinesis:DescribeStreamSummary",
+                            "kinesis:ListShards",
+                            "kinesis:GetShardIterator",
+                            "kinesis:GetRecords"
+                        ],
+                        "Resource": "arn:aws:kinesis:REGION:ACCOUNT_ID:stream/mg-usage-stream"
+                    },
+                    {
+                        "Sid": "InspectArchiveBucket",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetBucketLocation",
+                            "s3:ListBucket",
+                            "s3:ListBucketMultipartUploads"
+                        ],
+                        "Resource": "arn:aws:s3:::BUCKET_NAME"
+                    },
+                    {
+                        "Sid": "DeliverRawArchive",
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:PutObject",
+                            "s3:AbortMultipartUpload",
+                            "s3:GetObject"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::BUCKET_NAME/raw/*",
+                            "arn:aws:s3:::BUCKET_NAME/firehose-errors/*"
+                        ]
+                    },
+                    {
+                        "Sid": "WriteArchiveErrors",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:PutLogEvents"
+                        ],
+                        "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/kinesisfirehose/mg-raw-archive:*"
+                    }
+                ]
+            }
+        },
+        "mg-workflow-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "states.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "InvokeCaseActions",
+                        "Effect": "Allow",
+                        "Action": [
+                            "lambda:InvokeFunction"
+                        ],
+                        "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:mg-cases"
+                    },
+                    {
+                        "Sid": "NotifyBudgetSubscribers",
+                        "Effect": "Allow",
+                        "Action": [
+                            "sns:Publish"
+                        ],
+                        "Resource": "arn:aws:sns:REGION:ACCOUNT_ID:mg-budget-alerts"
+                    },
+                    {
+                        "Sid": "ConfigureExecutionLogDelivery",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogDelivery",
+                            "logs:GetLogDelivery",
+                            "logs:UpdateLogDelivery",
+                            "logs:DeleteLogDelivery",
+                            "logs:ListLogDeliveries",
+                            "logs:PutResourcePolicy",
+                            "logs:DescribeResourcePolicies",
+                            "logs:DescribeLogGroups"
+                        ],
+                        "Resource": "*"
+                    }
+                ]
+            }
+        },
+        "operator-api-invoke-policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "AcknowledgeBudgetCases",
+                    "Effect": "Allow",
+                    "Action": [
+                        "execute-api:Invoke"
+                    ],
+                    "Resource": "arn:aws:execute-api:REGION:ACCOUNT_ID:API_ID/prod/POST/cases/*/ack"
+                }
+            ]
+        },
+        "mg-producer-workflow-role": {
+            "trust_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "states.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "permissions_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "InvokeOnlyTheUsageProducer",
+                        "Effect": "Allow",
+                        "Action": [
+                            "lambda:InvokeFunction"
+                        ],
+                        "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:mg-producer:*"
+                    },
+                    {
+                        "Sid": "ConfigureExecutionLogDelivery",
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:CreateLogDelivery",
+                            "logs:GetLogDelivery",
+                            "logs:UpdateLogDelivery",
+                            "logs:DeleteLogDelivery",
+                            "logs:ListLogDeliveries",
+                            "logs:PutResourcePolicy",
+                            "logs:DescribeResourcePolicies",
+                            "logs:DescribeLogGroups"
+                        ],
+                        "Resource": "*"
+                    }
+                ]
+            }
+        }
+    }
+}

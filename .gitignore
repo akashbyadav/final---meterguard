@@ -1,0 +1,9 @@
+# Python caches and local dependency environments are generated, not source.
+__pycache__/
+*.py[cod]
+.venv/
+
+# Keep credentials and account-specific scratch exports out of the project.
+.env
+*.pem
+local-settings.json

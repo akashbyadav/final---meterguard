@@ -1,0 +1,53 @@
+{
+    "Comment": "Publish a bounded workload in sequential five-minute Lambda segments. Keep the original input and deployed generator version unchanged when retrying a run.",
+    "QueryLanguage": "JSONPath",
+    "StartAt": "ProduceSegment",
+    "TimeoutSeconds": 14400,
+    "States": {
+        "ProduceSegment": {
+            "Comment": "Wait for Kinesis acceptance of one segment. Retries reuse its original sequence offset; already accepted events retain their identity.",
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "arn:aws:lambda:REGION:ACCOUNT_ID:function:mg-producer:PRODUCER_VERSION",
+                "Payload.$": "$"
+            },
+            "OutputPath": "$.Payload",
+            "TimeoutSeconds": 660,
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "States.TaskFailed",
+                        "States.Timeout"
+                    ],
+                    "IntervalSeconds": 5,
+                    "BackoffRate": 2,
+                    "MaxAttempts": 2
+                }
+            ],
+            "Next": "WorkloadComplete"
+        },
+        "WorkloadComplete": {
+            "Comment": "Finish only after all requested seconds have been published. A 900-second input normally completes three segments.",
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.complete",
+                    "BooleanEquals": true,
+                    "Next": "Completed"
+                }
+            ],
+            "Default": "UseNextSegmentInput"
+        },
+        "UseNextSegmentInput": {
+            "Comment": "Carry the unchanged run settings and next global sequence offset into the next invocation.",
+            "Type": "Pass",
+            "InputPath": "$.next_input",
+            "Next": "ProduceSegment"
+        },
+        "Completed": {
+            "Comment": "Output reports accepted distinct operations and planned deliveries. Unknown network outcomes or retries can add physical deliveries; check warehouse counts separately.",
+            "Type": "Succeed"
+        }
+    }
+}

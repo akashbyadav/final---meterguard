@@ -1,0 +1,30 @@
+{
+    "_instructions": "Copy only keys beginning with -- into Glue job parameters. Replace uppercase placeholders. The _instructions and _parameter_help fields are documentation, not job arguments.",
+    "--REGION": "REGION",
+    "--BUCKET": "BUCKET_NAME",
+    "--STREAM_ARN": "arn:aws:kinesis:REGION:ACCOUNT_ID:stream/mg-usage-stream",
+    "--CONTEXT_URL": "https://API_ID.execute-api.REGION.amazonaws.com/prod/billing-context/batch",
+    "--WORKGROUP_NAME": "mg-workgroup",
+    "--DATABASE": "dev",
+    "--COPY_ROLE_ARN": "arn:aws:iam::ACCOUNT_ID:role/mg-redshift-copy-role",
+    "--GENERATION": "live-001",
+    "--PROCESSING_VERSION": "v1",
+    "--RUN_MODE": "live",
+    "--REPLAY_PREFIX": "unused",
+    "--REPLAY_FROM": "unused",
+    "--REPLAY_TO": "unused",
+    "--FAIL_AFTER_COMMIT_BATCH": "-1",
+    "--conf": "spark.speculation=false",
+    "--additional-python-modules": "boto3==1.40.0,botocore==1.40.0,s3transfer==0.13.1",
+    "_parameter_help": {
+        "GENERATION": "Durable query/checkpoint identity. Keep it on restart; allocate a new one for a new replay selection.",
+        "PROCESSING_VERSION": "Business result version included in the fact key. Keep reports scoped to one version.",
+        "RUN_MODE": "live reads Kinesis continuously; replay reads a bounded S3 selection once.",
+        "REPLAY_PREFIX": "Raw S3 arrival-time prefix. Keep it stable for one replay generation; use unused in live mode.",
+        "REPLAY_FROM / REPLAY_TO": "Inclusive start and exclusive end in business event time; use unused in live mode.",
+        "FAIL_AFTER_COMMIT_BATCH": "-1 disables injection; any or a batch number fails after commit but before checkpoint completion.",
+        "COPY_ROLE_ARN": "Namespace-associated IAM role allowing Redshift to read the completed S3 staging files.",
+        "conf": "Disable speculative Spark tasks to avoid unnecessary duplicate work.",
+        "additional-python-modules": "Pinned SDK versions supporting conditional S3 object creation."
+    }
+}

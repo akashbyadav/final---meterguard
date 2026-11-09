@@ -1,0 +1,73 @@
+{
+    "_instructions": "Copy only one named input object. Use producer_sustained in the mg-producer-workflow Step Functions execution editor; use count inputs in the mg-producer Lambda test editor. Repeating a run must preserve every input value and the deployed generator code.",
+    "producer_initial": {
+        "run_id": "baseline-001",
+        "count": 100,
+        "duplicate_every": 10,
+        "start_time": "2026-10-18T10:00:00Z",
+        "tenant_id": "customer-017",
+        "contract_version": "v1"
+    },
+    "producer_after_rate_change": {
+        "run_id": "new-rate-001",
+        "count": 100,
+        "duplicate_every": 10,
+        "start_time": "2026-10-18T13:00:00Z",
+        "tenant_id": "customer-017",
+        "contract_version": "v2"
+    },
+    "producer_recovery": {
+        "run_id": "recovery-001",
+        "count": 10,
+        "duplicate_every": 1,
+        "start_time": "2026-10-18T11:00:00Z",
+        "tenant_id": "customer-017",
+        "contract_version": "v1"
+    },
+    "producer_missing_reference": {
+        "run_id": "missing-001",
+        "count": 1,
+        "duplicate_every": 0,
+        "start_time": "2026-10-18T10:00:00Z",
+        "tenant_id": "customer-unknown",
+        "contract_version": "v1"
+    },
+    "context_lambda": {
+        "body": "{\"keys\":[{\"tenant_id\":\"customer-017\",\"contract_version\":\"v1\"}]}"
+    },
+    "context_api_body": {
+        "keys": [
+            {
+                "tenant_id": "customer-017",
+                "contract_version": "v1"
+            }
+        ]
+    },
+    "dispatcher": {},
+    "_producer_input_help": {
+        "run_id": "Operation-set identity. Reuse the complete input for retry; change run_id for new operations.",
+        "count": "Number of distinct generated operations, from 1 to 10000.",
+        "duplicate_every": "Repeat zero-based indexes divisible by this value. Zero disables intentional duplicates.",
+        "start_time": "First business event timestamp with timezone. Each subsequent event adds one second; sending is not paced to that timestamp.",
+        "tenant_id": "Customer identifier and Kinesis partition key. Must match an existing contract unless verifying quarantine.",
+        "contract_version": "Exact historical contract key. The producer does not supply prices or compute charges."
+    },
+    "producer_sustained": {
+        "mode": "sustained",
+        "run_id": "usage-20261018-001",
+        "duration_seconds": 900,
+        "events_per_second": 200,
+        "duplicate_every": 100,
+        "start_time": "2026-10-18T14:00:00Z"
+    },
+    "_sustained_input_help": {
+        "mode": "sustained selects paced multi-customer generation; count retains the fixed-size acceptance inputs.",
+        "run_id": "Readable run identity using 1..40 letters, digits, underscores or hyphens. Preserve all settings and generator code for retry; use a fresh identity for new usage.",
+        "duration_seconds": "Total paced publication seconds across all segments, 1..3600. Default 900 produces at least 15 minutes of traffic plus workflow gaps and any retry delays.",
+        "events_per_second": "Distinct operations per one-second group, 1..250. Default 200 gives 180000 operations in 900 seconds. Actual throughput can be lower when requests are slow.",
+        "duplicate_every": "Repeat every Nth zero-based global index; 100 adds 1800 deliberate duplicate deliveries to the default run. Zero disables deliberate duplicates.",
+        "start_time": "Business timestamp of operation zero, including timezone. Subsequent times advance by index/events_per_second. This may be historical and does not schedule the workflow.",
+        "start_second": "Internal continuation offset returned in next_input. Do not add it to the first workflow input or edit it manually.",
+        "customers": "Four fictional customers in lambda/producer.py, with v1 contracts in reference-items.json. Approximately 2% failed requests, zero pages for failures, varied page counts for successes."
+    }
+}

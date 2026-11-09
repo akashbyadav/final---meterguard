@@ -1,0 +1,173 @@
+{
+    "_instructions": "Create all eight items separately using DynamoDB JSON mode: two rates and six contracts. The customer-017 rate changes at 12:00 UTC on 2026-10-18. Four named customers support the sustained workload using document-v1. Reference versions are immutable.",
+    "mg-rates": [
+        {
+            "rate_id": {
+                "S": "document-v1"
+            },
+            "service": {
+                "S": "document_extraction"
+            },
+            "currency": {
+                "S": "INR"
+            },
+            "rate_per_page": {
+                "N": "0.40"
+            }
+        },
+        {
+            "rate_id": {
+                "S": "document-v2"
+            },
+            "service": {
+                "S": "document_extraction"
+            },
+            "currency": {
+                "S": "INR"
+            },
+            "rate_per_page": {
+                "N": "0.30"
+            }
+        }
+    ],
+    "mg-contracts": [
+        {
+            "tenant_id": {
+                "S": "customer-017"
+            },
+            "contract_version": {
+                "S": "v1"
+            },
+            "rate_id": {
+                "S": "document-v1"
+            },
+            "valid_from": {
+                "S": "2026-01-01T00:00:00Z"
+            },
+            "valid_to": {
+                "S": "2026-10-18T12:00:00Z"
+            },
+            "budget_amount": {
+                "N": "500"
+            },
+            "budget_policy_version": {
+                "S": "monthly-500-v1"
+            }
+        },
+        {
+            "tenant_id": {
+                "S": "customer-017"
+            },
+            "contract_version": {
+                "S": "v2"
+            },
+            "rate_id": {
+                "S": "document-v2"
+            },
+            "valid_from": {
+                "S": "2026-10-18T12:00:00Z"
+            },
+            "valid_to": {
+                "S": "2100-01-01T00:00:00Z"
+            },
+            "budget_amount": {
+                "N": "500"
+            },
+            "budget_policy_version": {
+                "S": "monthly-500-v1"
+            }
+        },
+        {
+            "tenant_id": {
+                "S": "aster-lending"
+            },
+            "contract_version": {
+                "S": "v1"
+            },
+            "rate_id": {
+                "S": "document-v1"
+            },
+            "valid_from": {
+                "S": "2026-01-01T00:00:00Z"
+            },
+            "valid_to": {
+                "S": "2100-01-01T00:00:00Z"
+            },
+            "budget_amount": {
+                "N": "75000"
+            },
+            "budget_policy_version": {
+                "S": "monthly-scale-v1"
+            }
+        },
+        {
+            "tenant_id": {
+                "S": "harbor-claims"
+            },
+            "contract_version": {
+                "S": "v1"
+            },
+            "rate_id": {
+                "S": "document-v1"
+            },
+            "valid_from": {
+                "S": "2026-01-01T00:00:00Z"
+            },
+            "valid_to": {
+                "S": "2100-01-01T00:00:00Z"
+            },
+            "budget_amount": {
+                "N": "30000"
+            },
+            "budget_policy_version": {
+                "S": "monthly-scale-v1"
+            }
+        },
+        {
+            "tenant_id": {
+                "S": "cobalt-logistics"
+            },
+            "contract_version": {
+                "S": "v1"
+            },
+            "rate_id": {
+                "S": "document-v1"
+            },
+            "valid_from": {
+                "S": "2026-01-01T00:00:00Z"
+            },
+            "valid_to": {
+                "S": "2100-01-01T00:00:00Z"
+            },
+            "budget_amount": {
+                "N": "20000"
+            },
+            "budget_policy_version": {
+                "S": "monthly-scale-v1"
+            }
+        },
+        {
+            "tenant_id": {
+                "S": "maple-accounts"
+            },
+            "contract_version": {
+                "S": "v1"
+            },
+            "rate_id": {
+                "S": "document-v1"
+            },
+            "valid_from": {
+                "S": "2026-01-01T00:00:00Z"
+            },
+            "valid_to": {
+                "S": "2100-01-01T00:00:00Z"
+            },
+            "budget_amount": {
+                "N": "15000"
+            },
+            "budget_policy_version": {
+                "S": "monthly-scale-v1"
+            }
+        }
+    ]
+}
